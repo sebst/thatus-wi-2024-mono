@@ -1,60 +1,17 @@
 name: 'Repository Split'
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - 'features/**'
-  workflow_dispatch:
-    inputs:
-      origin:
-        type: string
-        description: The repository to split
-        required: true
-        default: sebst/thatus-wi-2024-mono
-      ref:
-        type: string
-        description: The git ref to use
-        required: true
-        default: main
-      paths:
-        type: string
-        description: 'List of "--path [..] arguments for "git-filter-repo"'
-        required: true
-        default: >-
-          (
-            "scripts/"
-          )
-      path_globs:
-        type: string
-        description: 'List of "--path-glob [..] arguments for "git-filter-repo"'
-        required: true
-        default: ()
-      rename:
-        type: string
-        description: 'List of "--path-rename [..]" arguments for "git-filter-repo"'
-        required: true
-        default: >-
-          (
-            "features/.github/:.github/"
-          )
-      target:
-        type: string
-        description: The target repository to push to
-        required: true
-        default: 'sebst/thatus-wi-2024-split'
-    #   PAT_GITHUB_TOKEN:
-    #     type: string
-    #     description: The GitHub Personal access token to use
-    #     required: false
-    #     default: ''
-
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/**'
+  
 run-name: >-
   Repository Split
 
 concurrency:
-  group: 'features'
+  group: 'scripts'
   cancel-in-progress: false
 
 jobs:
@@ -64,35 +21,22 @@ jobs:
     env:
       commit_author_name: 'github-actions[bot]'
       commit_author_email: 'github-actions[bot]@users.noreply.github.com'
+      origin: sebst/thatus-wi-2024-mono
+      ref: main
+      paths: '("scripts/")'
+      path_globs: '()'
+      rename: '("scripts/.github/:.github/")'
+      target: sebst/thatus-wi-2024-split
       PAT_GITHUB_TOKEN: ${{ secrets.PAT_GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
-    - name: Bash Version
-      run: |
-        # [Script]
-
-        echo '::group::debug: Environment Variable: "$SHELL"'
-        echo "${SHELL}"
-        echo '::endgroup::'
-
-        echo '::group::debug: Environment Variable: "$BASH"'
-        echo "${BASH}"
-        echo '::endgroup::'
-
-        echo '::group::debug: Environment Variable: "$BASH_VERSION"'
-        echo "${BASH_VERSION}"
-        echo '::endgroup::'
-
-        echo '::group::debug: Software Version: "bash"'
-        bash --version
-        echo '::endgroup::'
     - uses: actions/checkout@v4
       with:
         # Relative path under $GITHUB_WORKSPACE to place the repository
         path: 'origin'
-        repository: '${{ inputs.origin }}'
-        ref: ${{ inputs.ref }}
+        repository: '${{ env.origin }}'
+        ref: ${{ env.ref }}
         # fetch all commits
         fetch-depth: 0
         fetch-tags: false
@@ -103,12 +47,12 @@ jobs:
         # ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
         # see: https://github.blog/2020-01-17-bring-your-monorepo-down-to-size-with-sparse-checkout/
         # sparse-checkout: |
-        #  features/
+        #  scripts/
         # sparse-checkout-cone-mode: false
     - uses: actions/checkout@v4
       with:
         path: 'target'
-        repository: '${{ inputs.target }}'
+        repository: '${{ env.target }}'
         token: ${{ secrets.PAT_GITHUB_TOKEN }}
         # ref: ${{ github.head_ref }}
         # fetch all commits
@@ -149,7 +93,7 @@ jobs:
         echo '::endgroup::'
 
         echo '::group::Extract "--path [..]" Parameters from Inputs'
-        declare -ra pathsArray=${{ inputs.paths }}
+        declare -ra pathsArray=${{ env.paths }}
         declare -a pathArguments=()
         for relativePath in ${pathsArray[@]}; do
           pathArguments+=( "--path" "${relativePath}" )
@@ -157,7 +101,7 @@ jobs:
         echo '::endgroup::'
 
         echo '::group::Extract "--path-glob [..]" Parameters from Inputs'
-        declare -ra pathGlobsArray=${{ inputs.path_globs }}
+        declare -ra pathGlobsArray=${{ env.path_globs }}
         declare -a pathGlobArguments=()
         for pathGlob in ${pathGlobsArray[@]}; do
           pathGlobArguments+=( "--path" "${pathGlob}" )
@@ -165,7 +109,7 @@ jobs:
         echo '::endgroup::'
 
         echo '::group::Extract "--path-rename [..]" Parameters from Inputs'
-        declare -ra renameArray=${{ inputs.rename }}
+        declare -ra renameArray=${{ env.rename }}
         declare -a pathRenameArguments=()
         for rename in ${renameArray[@]}; do
           pathRenameArguments+=( "--path-rename" "${rename}" )
@@ -184,7 +128,7 @@ jobs:
         # see: https://htmlpreview.github.io/?https://github.com/newren/git-filter-repo/blob/docs/html/git-filter-repo.html
         echo '::group::Run "git-filter-repo"'
         git filter-repo \
-          --refs ${{ inputs.ref }} \
+          --refs ${{ env.ref }} \
           "${pathArguments[@]}" \
           "${pathGlobArguments[@]}" \
           "${pathRenameArguments[@]}" \
@@ -193,7 +137,7 @@ jobs:
           --email-callback \
             'return b"${{ env.commit_author_email }}"' \
           --commit-callback \
-            'commit.message += f"\noriginal-commit: https://github.com/${{ inputs.origin }}/commit/{commit.original_id.decode()}/".encode("ascii")' \
+            'commit.message += f"\noriginal-commit: https://github.com/${{ env.origin }}/commit/{commit.original_id.decode()}/".encode("ascii")' \
           --source ./origin \
           --target ./target
         echo '::endgroup::'
@@ -218,8 +162,8 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         directory: 'target'
-        repository: ${{ inputs.target }}
-        branch: ${{ inputs.ref }}
+        repository: ${{ env.target }}
+        branch: ${{ env.ref }}
         tags: false
         force: false
         force_with_lease: true
