@@ -87,9 +87,6 @@ jobs:
         echo '::group::debug: Software Version: "bash"'
         bash --version
         echo '::endgroup::'
-    - name: Hide GitHub Token
-      run: |
-        echo '::add-mask::${{ env.GITHUB_TOKEN }}'
     - uses: actions/checkout@v4
       with:
         # Relative path under $GITHUB_WORKSPACE to place the repository
@@ -100,7 +97,7 @@ jobs:
         fetch-depth: 0
         fetch-tags: false
         # use default token or i.e. ${secrets.PERSONAL_ACCESS_TOKEN}
-        token: ${{ env.GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         persist-credentials: false
         # alternative: SSH key
         # ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -112,7 +109,7 @@ jobs:
       with:
         path: 'target'
         repository: '${{ inputs.target }}'
-        token: ${{ env.GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         # ref: ${{ github.head_ref }}
         # fetch all commits
         fetch-depth: 0
@@ -215,7 +212,7 @@ jobs:
         echo '::endgroup::'
 
         echo '::group::Fix "could not read Username for https://github.com: No such device or address"'
-        git config --global url.https://${{ env.GITHUB_TOKEN }}@github.com/.insteadOf https://github.com/
+        git config --global url.https://${{ secrets.GITHUB_TOKEN }}@github.com/.insteadOf https://github.com/
         echo '::endgroup::'
     - name: Push changes
       uses: ad-m/github-push-action@master
@@ -226,5 +223,5 @@ jobs:
         tags: false
         force: false
         force_with_lease: true
-        github_token: ${{ env.GITHUB_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         ssh: false
