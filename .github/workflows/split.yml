@@ -51,7 +51,7 @@ on:
     #     default: ''
 
 run-name: >-
-  [features/*] Repository Split
+  Repository Split
 
 concurrency:
   group: 'features'
