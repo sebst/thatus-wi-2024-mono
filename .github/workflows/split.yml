@@ -44,7 +44,7 @@ on:
         description: The target repository to push to
         required: true
         default: 'sebst/thatus-wi-2024-split'
-    #   GITHUB_TOKEN:
+    #   PAT_GITHUB_TOKEN:
     #     type: string
     #     description: The GitHub Personal access token to use
     #     required: false
@@ -64,7 +64,7 @@ jobs:
     env:
       commit_author_name: 'github-actions[bot]'
       commit_author_email: 'github-actions[bot]@users.noreply.github.com'
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PAT_GITHUB_TOKEN: ${{ secrets.PAT_GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
@@ -97,7 +97,7 @@ jobs:
         fetch-depth: 0
         fetch-tags: false
         # use default token or i.e. ${secrets.PERSONAL_ACCESS_TOKEN}
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT_GITHUB_TOKEN }}
         persist-credentials: false
         # alternative: SSH key
         # ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -109,7 +109,7 @@ jobs:
       with:
         path: 'target'
         repository: '${{ inputs.target }}'
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.PAT_GITHUB_TOKEN }}
         # ref: ${{ github.head_ref }}
         # fetch all commits
         fetch-depth: 0
@@ -212,7 +212,7 @@ jobs:
         echo '::endgroup::'
 
         echo '::group::Fix "could not read Username for https://github.com: No such device or address"'
-        git config --global url.https://${{ secrets.GITHUB_TOKEN }}@github.com/.insteadOf https://github.com/
+        git config --global url.https://${{ secrets.PAT_GITHUB_TOKEN }}@github.com/.insteadOf https://github.com/
         echo '::endgroup::'
     - name: Push changes
       uses: ad-m/github-push-action@master
@@ -223,5 +223,5 @@ jobs:
         tags: false
         force: false
         force_with_lease: true
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        PAT_GITHUB_TOKEN: ${{ secrets.PAT_GITHUB_TOKEN }}
         ssh: false
